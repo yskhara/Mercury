@@ -7,7 +7,6 @@ template class Chart::TwoDimensionalBarChart<double, double>;
 UI::MainWindow::MainWindow() {
   set_title("Basic application");
   set_default_size(600, 400);
-
   set_child(barChartArea);
 
   auto dataset = Chart::DataSet<double, double>();
@@ -18,7 +17,7 @@ UI::MainWindow::MainWindow() {
   std::random_device seedGen;
   std::default_random_engine engine(seedGen());
   std::uniform_int_distribution<> uniformDist(0, 4200);
-  for (int i = 0; i < 60; i++) {
+  for (int i = 400; i < 600; i++) {
     dataset.x.push_back(i);
     data_y.push_back(uniformDist(engine));
   }
