@@ -24,6 +24,9 @@ static constexpr double ChartXTickInnerLength = 4.0;
 
 static constexpr double ChartTickLabelFontSize = 8.0;
 
+/// Default number of divisions. Used when estimating the optimal ticks / divisions.
+static constexpr int ChartDefaultNDiv = 10;
+
 struct ChartDimensions {
   double OuterPadding = ChartAreaPadding;
   double DataAreaTopMargin;
@@ -222,6 +225,8 @@ private:
 
   //DiscreteAxis m_axis_x1;
   Axis m_axis_x, m_axis_y;
+  AxisRange<Dx> m_x_range;
+  AxisRange<Dy> m_y_range;
   //RealAxis m_axis_y1;
 
   void draw_axes(const Cairo::RefPtr<Cairo::Context> &cr);

@@ -37,8 +37,7 @@ public:
    * @param cr A Cairo::RefPtr to a Cairo::Context from a RecordingSurface.
    */
   void draw(const Cairo::RefPtr<Cairo::Context> &cr,
-            const Glib::RefPtr<Pango::Context> &pg,
-            std::vector<AxisTick> &ticks);
+            const Glib::RefPtr<Pango::Context> &pg);
   // virtual void set_data_range(DataType data) = 0;
   void set_ticks(std::vector<AxisTick> &&ticks);
   // virtual void
@@ -71,6 +70,13 @@ public:
   const double get_axis_max_offset() const noexcept;
   // virtual std::vector<std::string> get_ticks() = 0;
   // virtual std::string get_ticklabel_text_at(D data) = 0;
+
+  /**
+   * @brief Get the ticks worst dimensions.
+   * @param ticklabel_dim_max Maximum dimension of ticklabels measured along the axis.
+   * @param ticklabel_distance_min Minimum distance between ticklabels measured along the axis.
+   */
+  void get_ticks_worst_dimensions(double &ticklabel_dim_max, double &ticklabel_distance_min) const noexcept;
 
 protected:
   // Axis(BarChartArea &parent);
