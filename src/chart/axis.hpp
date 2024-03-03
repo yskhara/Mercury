@@ -23,9 +23,12 @@ private:
   std::string m_text;
 };
 
+enum class AxisOrientation { Horizontal, Vertical };
+
 /**
  * @brief The base class for classes representing an axis in a chart.
  */
+template<AxisOrientation Orientation>
 class Axis {
 public:
   // using DataType = int;
@@ -40,6 +43,7 @@ public:
             const Glib::RefPtr<Pango::Context> &pg);
   // virtual void set_data_range(DataType data) = 0;
   void set_ticks(std::vector<AxisTick> &&ticks);
+  void try_draw_ticklabels();
   // virtual void
   // estimate_max_ticklabel_dimension(double &crude_max_ticklabel_width,
   //                                  double &crude_max_ticklabel_height) = 0;
@@ -64,10 +68,15 @@ public:
    * allocation is insufficient for the axis and the ticks.
    * @return false when allocation is succesful.
    */
-  bool allocate_length(const double length);
+  bool allocate_new_length(const double length);
   const double get_axis_length() const noexcept;
-  const double get_axis_min_offset() const noexcept;
-  const double get_axis_max_offset() const noexcept;
+  const double get_axis_hanging_begin() const noexcept;
+  /**
+   * @brief Get the axis hanging at the end of this axis.
+   * It is measured from the end of this axis and farther end of the last tick label.
+   * @return Axis hanging at the end of this axis.
+   */
+  double get_axis_hanging_end() const noexcept;
   // virtual std::vector<std::string> get_ticks() = 0;
   // virtual std::string get_ticklabel_text_at(D data) = 0;
 
@@ -76,18 +85,19 @@ public:
    * @param ticklabel_dim_max Maximum dimension of ticklabels measured along the axis.
    * @param ticklabel_distance_min Minimum distance between ticklabels measured along the axis.
    */
-  void get_ticks_worst_dimensions(double &ticklabel_dim_max, double &ticklabel_distance_min) const noexcept;
+  void get_ticks_worst_dimensions(double &ticklabel_dim_max, double &ticklabel_center_dist_min) const noexcept;
 
 protected:
   // Axis(BarChartArea &parent);
   Gtk::DrawingArea &m_parent;
   double m_allocated_dimen;
   double m_axis_length;
-  double m_axis_min_offset;
-  double m_axis_max_offset;
+  double m_axis_hanging_begin;
+  double m_axis_hanging_end;
   std::vector<AxisTick> m_ticks;
   std::vector<Glib::RefPtr<Pango::Layout>> m_tick_layouts;
   bool m_tick_layouts_valid = false;
 
   bool update_layout() noexcept;
+  bool update_axis_length() noexcept;
 };

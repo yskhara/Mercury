@@ -144,27 +144,6 @@ void AxisRenderer<O>::try_render_ticklabel(
 }
 #endif
 
-template <typename Dx, typename Dy> // requires IsDatatype<D>
-void DataSet<Dx, Dy>::autorange(AxisRange<Dx> &x_range,
-                                AxisRange<Dy> &y_range) {
-  if (this->x.size() > 0) {
-    Dx x_min, x_max;
-    x_min = x_max = this->x[0];
-    for (auto const &val : this->x) {
-      if (val < x_min) {
-        x_min = val;
-      } else if (val > x_max) {
-        x_max = val;
-      }
-    }
-
-    Dx x_delta = x_max - x_min;
-    Dx x_delta_pow = std::pow(10, std::floor(std::log10(x_delta)));
-    x_range.max = std::ceil(x_max / x_delta_pow) * x_delta_pow;
-    x_range.min = std::floor(x_min / x_delta_pow) * x_delta_pow;
-  }
-}
-
 template <typename Dx, typename Dy>
 TwoDimensionalBarChart<Dx, Dy>::TwoDimensionalBarChart()
     : m_axis_x(*this), m_axis_y(*this) {
@@ -204,20 +183,32 @@ template <typename Dx, typename Dy>
 void TwoDimensionalBarChart<Dx, Dy>::optimize_axes_limits() {
   auto [chart_area_x, chart_area_y] = get_chart_area_dimensions();
 
-  m_dataset.autorange(m_x_range, m_y_range);
+  m_dataset.autorange_x(m_x_range);
+  m_dataset.autorange_y(m_y_range);
 
   std::vector<AxisTick> ticks;
   ticks.push_back(AxisTick(0.0, std::format("{}", m_x_range.min)));
-  ticks.push_back(AxisTick(0.5, std::format("{}", (m_x_range.min + m_x_range.min) / 2)));
+  ticks.push_back(
+      AxisTick(0.5, std::format("{}", (m_x_range.min + m_x_range.min) / 2)));
   ticks.push_back(AxisTick(1.0, std::format("{}", m_x_range.max)));
 
   double _x_ticklabel_dim_max = 0;
   double _x_ticklabel_distance_min = 0;
   m_axis_x.set_ticks(std::move(ticks));
-  m_axis_x.allocate_length(chart_area_x);
-  m_axis_x.get_ticks_worst_dimensions(_x_ticklabel_dim_max, _x_ticklabel_distance_min);
+  m_axis_x.allocate_new_length(chart_area_x);
+  m_axis_x.get_ticks_worst_dimensions(_x_ticklabel_dim_max,
+                                      _x_ticklabel_distance_min);
 
-  std::cout << _x_ticklabel_dim_max << ", " << _x_ticklabel_distance_min << std::endl;
+  auto x_n_div_max = m_axis_x.get_axis_length() /
+                     (_x_ticklabel_dim_max + m_dimensions.XTickLabelMargin);
+
+  m_dataset.autorange_x(m_x_range, x_n_div_max);
+
+  std::cout << std::format(
+                   "min: {}, max: {}, n_div: {} (requested: {}), tick_step: {}",
+                   m_x_range.min, m_x_range.max, m_x_range.n_div, x_n_div_max,
+                   (m_x_range.max - m_x_range.min) / m_x_range.n_div)
+            << std::endl;
 
   // find candidate ticklabel size
   double cand_x_ticklabel_width = 0.0, cand_x_ticklabel_height = 0.0,
@@ -228,10 +219,10 @@ void TwoDimensionalBarChart<Dx, Dy>::optimize_axes_limits() {
   //                                               cand_y_ticklabel_height);
 
   double cand_chart_data_area_width =
-      chart_area_x - (cand_y_ticklabel_width + ChartYTickLabelMargin +
+      chart_area_x - (cand_y_ticklabel_width + m_dimensions.YTickLabelMargin +
                       ChartYTickOuterLength + (cand_x_ticklabel_width / 2.0));
   double cand_chart_data_area_height =
-      chart_area_y - (cand_x_ticklabel_height + ChartXTickLabelMargin +
+      chart_area_y - (cand_x_ticklabel_height + m_dimensions.XTickLabelMargin +
                       ChartXTickOuterLength + (cand_y_ticklabel_height / 2.0));
   std::cout << "cand_chart_data_area_width : " << cand_chart_data_area_width
             << std::endl
@@ -239,17 +230,20 @@ void TwoDimensionalBarChart<Dx, Dy>::optimize_axes_limits() {
             << std::endl;
 
   // find maximum number of divisions
-  int max_n_of_divs_x = cand_chart_data_area_width /
-                        (cand_x_ticklabel_width + ChartXTickLabelMargin);
-  int max_n_of_divs_y = cand_chart_data_area_height /
-                        (cand_y_ticklabel_height + ChartYTickLabelMargin);
+  int max_n_of_divs_x =
+      cand_chart_data_area_width /
+      (cand_x_ticklabel_width + m_dimensions.XTickLabelMargin);
+  int max_n_of_divs_y =
+      cand_chart_data_area_height /
+      (cand_y_ticklabel_height + m_dimensions.YTickLabelMargin);
   // m_axis_y1->set_max_n_of_divs(max_n_of_divs_y);
   // m_axis_y1->set_axis_length(cand_chart_data_area_height);
 
   m_dimensions.DataAreaWidth = cand_chart_data_area_width;
   m_dimensions.DataAreaHeight = cand_chart_data_area_height;
-  m_dimensions.DataAreaLeftMargin =
-      cand_y_ticklabel_width + ChartYTickLabelMargin + ChartYTickOuterLength;
+  m_dimensions.DataAreaLeftMargin = cand_y_ticklabel_width +
+                                    m_dimensions.YTickLabelMargin +
+                                    ChartYTickOuterLength;
   m_dimensions.DataAreaTopMargin = cand_y_ticklabel_height / 2.0;
 }
 
@@ -266,18 +260,44 @@ void TwoDimensionalBarChart<Dx, Dy>::draw_axes(
   auto recContext = Cairo::Context::create(recSurf);
 
   auto ticks = std::vector<AxisTick>();
-  for (int i = 0; i <= 10; i++) {
-    auto val = m_x_range.min + (m_x_range.max - m_x_range.min) * i / 10.0;
-    ticks.push_back(AxisTick(i / 10.0, std::format("{}", val)));
+  for (int i = 0; i < m_x_range.n_div + 1; i++) {
+    auto r = 1.0 / m_x_range.n_div * i;
+    ticks.push_back(AxisTick(
+        r, std::format("{}",
+                       m_x_range.min + (m_x_range.max - m_x_range.min) * r)));
   }
 
   m_axis_x.set_ticks(std::move(ticks));
-  m_axis_x.allocate_length(
+  // m_axis_x.allocate_length(chart_area_x);
+
+  // m_axis_x.set_ticks(std::move(ticks));
+  m_axis_x.allocate_new_length(
       m_dimensions.DataAreaWidth); // get_width());// - (2 *
                                    // m_dimensions.OuterPadding));
   m_axis_x.draw(recContext, get_pango_context());
 
   auto axis_extents = recSurf->ink_extents();
+  cr->set_source(
+      recSurf, m_dimensions.OuterPadding + m_dimensions.DataAreaLeftMargin,
+      m_dimensions.OuterPadding + m_dimensions.DataAreaTopMargin +
+          m_dimensions.DataAreaHeight - (axis_extents.y + axis_extents.height));
+  cr->paint();
+
+  recSurf = Cairo::RecordingSurface::create();
+  recContext = Cairo::Context::create(recSurf);
+  auto y_ticks = std::vector<AxisTick>();
+  for (int i = 0; i < m_y_range.n_div + 1; i++) {
+    auto r = 1.0 / m_y_range.n_div * i;
+    y_ticks.push_back(AxisTick(
+        r, std::format("{}",
+                       m_y_range.min + (m_y_range.max - m_y_range.min) * r)));
+  }
+
+  m_axis_y.set_ticks(std::move(y_ticks));
+  m_axis_y.allocate_new_length(m_dimensions.DataAreaHeight);
+  // get_width());// - (2 * m_dimensions.OuterPadding));
+  m_axis_y.draw(recContext, get_pango_context());
+  axis_extents = recSurf->ink_extents();
   cr->set_source(
       recSurf, m_dimensions.OuterPadding + m_dimensions.DataAreaLeftMargin,
       m_dimensions.OuterPadding + m_dimensions.DataAreaTopMargin +

@@ -1,6 +1,8 @@
 #pragma once
 #include <gtkmm.h>
+#include "axis_range.hpp"
 #include "axis.hpp"
+#include "dataset.hpp"
 
 namespace Chart {
 
@@ -8,15 +10,11 @@ namespace Chart {
 static constexpr double ChartAreaPadding = 10.0;
 /// Minimum distance between Y tick and corresponding tick label
 static constexpr double ChartYTickMargin = 2.0;
-/// Minimum distance between neighbouring Y tick labels
-static constexpr double ChartYTickLabelMargin = 2.0;
 /// Length of Y tick out of data area
 static constexpr double ChartYTickOuterLength = 4.0;
 /// Length of Y tick in data area
 static constexpr double ChartYTickInnerLength = 4.0;
 
-/// Minimum distance between neighbouring X tick labels
-static constexpr double ChartXTickLabelMargin = 2.0;
 /// Length of X tick out of data area
 static constexpr double ChartXTickOuterLength = 4.0;
 /// Length of X tick in data area
@@ -28,11 +26,23 @@ static constexpr double ChartTickLabelFontSize = 8.0;
 static constexpr int ChartDefaultNDiv = 10;
 
 struct ChartDimensions {
+  struct Defaults {
+  /// Minimum distance between X tick and corresponding tick label
+  static constexpr double XTickToLabelMargin = 2.0;
+  /// Minimum distance between neighbouring X tick labels
+  static constexpr double XTickLabelMargin = 20.0;
+  /// Minimum distance between neighbouring Y tick labels
+  static constexpr double YTickLabelMargin = 20.0;
+
+  };
+
   double OuterPadding = ChartAreaPadding;
   double DataAreaTopMargin;
   double DataAreaLeftMargin;
   double DataAreaHeight;
   double DataAreaWidth;
+  double XTickLabelMargin = Defaults::XTickLabelMargin;
+  double YTickLabelMargin = Defaults::YTickLabelMargin;
 };
 
 template <typename D> class DataPoint {
@@ -78,57 +88,11 @@ concept IsDatatype = decltype(test_if_is_datatype<D>(0))::value;
 // データの中身を見てどうの、という処理は DataSeries
 // 側でやる。例えば軸の範囲を決めたりとか。
 //  using DataType = double;
-/**
- * @brief One-dimensional data series.
- * FIXME: It shall be possible to store, say, std::string to a DataSeries, which
- * is currently not.
- */
-template <typename D> // requires IsDatatype<D>
-class DataSeries : public std::vector<D> {
-  static void find_suitable_axis_range(D);
-};
 
-class RealDataType {
-  public:
-  using Type = double;
-};
-
-template<typename D>
-class AxisRange{
-public:
-  D min;
-  D max;
-  D tick;
-};
-
-/**
- * @brief Two-dimensional data series.
- *
- * @tparam Dx
- * @tparam Dy
- * @tparam N
- */
-template <typename Dx, typename Dy> // requires IsDatatype<D>
-class DataSet{
-  public:
-  //using DataSet = std::pair<std::vector<Dx>, std::vector<Dy>>;
-  DataSeries<Dx> x;
-  std::vector<DataSeries<Dy>> y;
-
-  // 現在のデータセットに対して Autorange する。
-  // 想定ユースケース：呼び出し元が autorange を呼び出した後、返ってきた range を用いて各 Axis のスケールを設定する。
-  void autorange(AxisRange<Dx>& x_range, AxisRange<Dy>& y_range);
-
-  private:
-
-};
-// using DataSet = std::vector<DataSeries>;
-
-enum class AxisOrientation { Horizontal, Vertical };
 
 template <AxisOrientation O> class AxisRenderer;
 class BarChartArea;
-
+#if 0
 class GraphConfiguration {
 public:
   double axisLineWidth = 1.0;
@@ -142,7 +106,7 @@ class StringAxisRange {};
 
 using CategoricalAxisDataType = std::string;
 template <AxisOrientation O>
-class CategoricalAxis : virtual public Axis{//<O, CategoricalAxisDataType> {
+class CategoricalAxis : virtual public Axis<O>{//<O, CategoricalAxisDataType> {
 public:
   //void
   //estimate_max_ticklabel_dimension(double &crude_max_ticklabel_width,
@@ -200,7 +164,7 @@ public:
 private:
   double m_axis_length;
 };
-
+#endif
 /**
  * @brief
  *
@@ -224,7 +188,8 @@ private:
   ChartDimensions m_dimensions;
 
   //DiscreteAxis m_axis_x1;
-  Axis m_axis_x, m_axis_y;
+  Axis<AxisOrientation::Horizontal> m_axis_x;
+  Axis<AxisOrientation::Vertical> m_axis_y;
   AxisRange<Dx> m_x_range;
   AxisRange<Dy> m_y_range;
   //RealAxis m_axis_y1;
