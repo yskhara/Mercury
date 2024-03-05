@@ -28,11 +28,10 @@ enum class AxisOrientation { Horizontal, Vertical };
 /**
  * @brief The base class for classes representing an axis in a chart.
  */
-template<AxisOrientation Orientation>
-class Axis {
+template <AxisOrientation Orientation> class Axis {
 public:
   // using DataType = int;
-  Axis(Gtk::DrawingArea &parent) : m_parent(parent){};
+  // Axis(Gtk::DrawingArea &parent) : m_parent(parent){};
   // virtual ~Axis(){};
   /**
    * @brief
@@ -73,7 +72,8 @@ public:
   const double get_axis_hanging_begin() const noexcept;
   /**
    * @brief Get the axis hanging at the end of this axis.
-   * It is measured from the end of this axis and farther end of the last tick label.
+   * It is measured from the end of this axis and farther end of the last tick
+   * label.
    * @return Axis hanging at the end of this axis.
    */
   double get_axis_hanging_end() const noexcept;
@@ -82,14 +82,18 @@ public:
 
   /**
    * @brief Get the ticks worst dimensions.
-   * @param ticklabel_dim_max Maximum dimension of ticklabels measured along the axis.
-   * @param ticklabel_distance_min Minimum distance between ticklabels measured along the axis.
+   * @param ticklabel_dim_max Maximum dimension of ticklabels measured along the
+   * axis.
+   * @param ticklabel_distance_min Minimum distance between ticklabels measured
+   * along the axis.
    */
-  void get_ticks_worst_dimensions(double &ticklabel_dim_max, double &ticklabel_center_dist_min) const noexcept;
+  void
+  get_ticks_worst_dimensions(double &ticklabel_dim_max,
+                             double &ticklabel_center_dist_min) const noexcept;
 
 protected:
   // Axis(BarChartArea &parent);
-  Gtk::DrawingArea &m_parent;
+  // Gtk::DrawingArea &m_parent;
   double m_allocated_dimen;
   double m_axis_length;
   double m_axis_hanging_begin;
@@ -98,6 +102,9 @@ protected:
   std::vector<Glib::RefPtr<Pango::Layout>> m_tick_layouts;
   bool m_tick_layouts_valid = false;
 
-  bool update_layout() noexcept;
+  /**
+   * @brief Updates Pango layout cache. Shall only be called from draw().
+   */
+  bool update_layout(const Glib::RefPtr<Pango::Context> &pg) noexcept;
   bool update_axis_length() noexcept;
 };

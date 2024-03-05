@@ -1,5 +1,6 @@
 #include "axis.hpp"
 #include "bar_chart_area.hpp"
+#include "pangomm/layout.h"
 
 AxisTick::AxisTick(const double rel_pos, const std::string &&text)
     : m_rel_pos(rel_pos), m_text(text) {}
@@ -9,24 +10,12 @@ const std::string &AxisTick::get_text() const noexcept { return m_text; }
 template <AxisOrientation Orientation>
 void Axis<Orientation>::draw(const Cairo::RefPtr<Cairo::Context> &cr,
                              const Glib::RefPtr<Pango::Context> &pg) {
-  auto layout = Pango::Layout::create(pg);
-
-  // try to draw the last ticklabel
-  // auto tick_last = m_ticks.back();
+  update_layout(pg);
+  update_axis_length();
   int text_width, text_height;
-
-  // layout->set_text(tick_last.get_text());
-  // layout->get_pixel_size(text_width, text_height);
-
-  /// FIXME: ちゃんと長さ計算するように。
-  // double axis_length =
-  //     (m_allocated_dimen - (text_width / 2.0)) / tick_last.get_rel_pos();
-  // axis_length = m_axis_length;
-
-  // 毎回 ticks は描画し直す。これでよい。
+  auto layout_iter = m_tick_layouts.begin();
   for (const auto &tick : m_ticks) {
-    layout->set_text(tick.get_text());
-    layout->get_pixel_size(text_width, text_height);
+    layout_iter->get()->get_pixel_size(text_width, text_height);
     double tick_center_x = m_axis_length * tick.get_rel_pos();
     cr->move_to(tick_center_x, 0);
     cr->line_to(tick_center_x, Chart::ChartXTickOuterLength);
@@ -38,7 +27,7 @@ void Axis<Orientation>::draw(const Cairo::RefPtr<Cairo::Context> &cr,
     cr->move_to(tick_center_x - (text_width / 2.0),
                 Chart::ChartXTickOuterLength +
                     Chart::ChartDimensions::Defaults::XTickToLabelMargin);
-    layout->show_in_cairo_context(cr);
+    layout_iter->get()->show_in_cairo_context(cr);
   }
 
   cr->move_to(0.0, 0.0);
@@ -130,7 +119,7 @@ void Axis<Orientation>::get_ticks_worst_dimensions(
 }
 
 template <AxisOrientation Orientation>
-bool Axis<Orientation>::update_layout() noexcept {
+bool Axis<Orientation>::update_layout(const Glib::RefPtr<Pango::Context> &pg) noexcept {
   // no need to update layout.
   if (m_tick_layouts_valid)
     return false;
@@ -138,7 +127,9 @@ bool Axis<Orientation>::update_layout() noexcept {
   m_tick_layouts.clear();
   for (const auto &tick : m_ticks) {
     /// TODO: add support for rotated texts
-    m_tick_layouts.push_back(m_parent.create_pango_layout(tick.get_text()));
+    auto layout = Pango::Layout::create(pg);
+    layout->set_text(tick.get_text());
+    m_tick_layouts.push_back(layout);
   }
 
   m_tick_layouts_valid = true;
