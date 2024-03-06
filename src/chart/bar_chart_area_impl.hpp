@@ -9,8 +9,7 @@
 using namespace Chart;
 
 template <typename Dx, typename Dy>
-TwoDimensionalBarChart<Dx, Dy>::TwoDimensionalBarChart()
-    : m_axis_x(*this), m_axis_y(*this) {
+TwoDimensionalBarChart<Dx, Dy>::TwoDimensionalBarChart() {
   // m_axis_y1 =
   // std::make_unique<NumericalAxis<AxisOrientation::Vertical>>(*this);
   // m_axis_y2 =

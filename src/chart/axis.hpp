@@ -40,7 +40,9 @@ public:
    */
   void draw(const Cairo::RefPtr<Cairo::Context> &cr,
             const Glib::RefPtr<Pango::Context> &pg);
-  // virtual void set_data_range(DataType data) = 0;
+  void try_draw(const Glib::RefPtr<Pango::Context> &pg,
+                const std::vector<const AxisTick> &ticks, double &max_dim_along,
+                double &max_dim_perp) const;
   void set_ticks(std::vector<AxisTick> &&ticks);
   void try_draw_ticklabels();
   // virtual void

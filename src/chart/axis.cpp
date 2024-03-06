@@ -39,6 +39,45 @@ void Axis<Orientation>::draw(const Cairo::RefPtr<Cairo::Context> &cr,
   // m_axis_length = axis_length;
 }
 
+template <>
+void Axis<AxisOrientation::Vertical>::try_draw(
+    const Glib::RefPtr<Pango::Context> &pg,
+    const std::vector<const AxisTick> &ticks, double &max_dim_along,
+    double &max_dim_perp) const {
+  auto ticks_count = m_ticks.size();
+  if (ticks_count < 2 || m_tick_layouts.size() != ticks_count) {
+    return;
+  }
+
+  int tick_width, tick_height;
+  m_tick_layouts[0]->get_pixel_size(tick_width, tick_height);
+  // if it is an x-axis:
+  double _ticklabel_dim_max = tick_width;
+  double _ticklabel_center_dist_min = std::numeric_limits<double>::max();
+
+  for (auto i = 0; i < ticks_count - 1; i++) {
+    auto ticks_center_dist =
+        std::abs(m_axis_length *
+                 (m_ticks[i + 1].get_rel_pos() - m_ticks[i].get_rel_pos()));
+    // if it is an x-axis:
+    int tick_next_width, tick_next_height;
+    m_tick_layouts[i + 1]->get_pixel_size(tick_next_width, tick_next_height);
+
+    if (ticks_center_dist < _ticklabel_center_dist_min) {
+      _ticklabel_center_dist_min = ticks_center_dist;
+    }
+
+    if (tick_next_width > _ticklabel_dim_max) {
+      _ticklabel_dim_max = tick_next_width;
+    }
+  }
+
+  ticklabel_dim_max = _ticklabel_dim_max;
+  ticklabel_center_dist_min = _ticklabel_center_dist_min;
+  m_axis_length = 1;
+  return;
+}
+
 template <AxisOrientation Orientation>
 void Axis<Orientation>::set_ticks(std::vector<AxisTick> &&ticks) {
   m_ticks = ticks;
@@ -51,8 +90,8 @@ void Axis<Orientation>::set_ticks(std::vector<AxisTick> &&ticks) {
 template <AxisOrientation Orientation>
 bool Axis<Orientation>::allocate_new_length(const double length) {
   m_allocated_dimen = length;
-  //update_layout();
-  //update_axis_length();
+  // update_layout();
+  // update_axis_length();
   return false;
 }
 
@@ -119,7 +158,8 @@ void Axis<Orientation>::get_ticks_worst_dimensions(
 }
 
 template <AxisOrientation Orientation>
-bool Axis<Orientation>::update_layout(const Glib::RefPtr<Pango::Context> &pg) noexcept {
+bool Axis<Orientation>::update_layout(
+    const Glib::RefPtr<Pango::Context> &pg) noexcept {
   // no need to update layout.
   if (m_tick_layouts_valid)
     return false;
