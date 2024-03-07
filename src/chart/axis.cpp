@@ -39,42 +39,49 @@ void Axis<Orientation>::draw(const Cairo::RefPtr<Cairo::Context> &cr,
   // m_axis_length = axis_length;
 }
 
-template <>
-void Axis<AxisOrientation::Vertical>::try_draw(
+template <AxisOrientation Orientation>
+void Axis<Orientation>::try_draw(
     const Glib::RefPtr<Pango::Context> &pg,
-    const std::vector<const AxisTick> &ticks, double &max_dim_along,
+    const std::vector<AxisTick> &ticks, double &max_dim_along,
     double &max_dim_perp) const {
-  auto ticks_count = m_ticks.size();
-  if (ticks_count < 2 || m_tick_layouts.size() != ticks_count) {
+  if (ticks.empty()) {
+    max_dim_along = max_dim_perp = 0.0;
     return;
   }
 
-  int tick_width, tick_height;
-  m_tick_layouts[0]->get_pixel_size(tick_width, tick_height);
-  // if it is an x-axis:
-  double _ticklabel_dim_max = tick_width;
-  double _ticklabel_center_dist_min = std::numeric_limits<double>::max();
+  auto layout = Pango::Layout::create(pg);
 
-  for (auto i = 0; i < ticks_count - 1; i++) {
-    auto ticks_center_dist =
-        std::abs(m_axis_length *
-                 (m_ticks[i + 1].get_rel_pos() - m_ticks[i].get_rel_pos()));
-    // if it is an x-axis:
-    int tick_next_width, tick_next_height;
-    m_tick_layouts[i + 1]->get_pixel_size(tick_next_width, tick_next_height);
+  int _max_dim_along = 0, _max_dim_perp = 0;
+  for (const auto &tick : ticks) {
+    int tick_dim_along, tick_dim_perp;
+    layout->set_text(tick.get_text());
+    measure_layout(layout, tick_dim_along, tick_dim_perp);
 
-    if (ticks_center_dist < _ticklabel_center_dist_min) {
-      _ticklabel_center_dist_min = ticks_center_dist;
+    if (tick_dim_along > _max_dim_along) {
+      _max_dim_along = tick_dim_along;
     }
 
-    if (tick_next_width > _ticklabel_dim_max) {
-      _ticklabel_dim_max = tick_next_width;
+    if (tick_dim_perp > _max_dim_perp) {
+      _max_dim_perp = tick_dim_perp;
     }
   }
 
-  ticklabel_dim_max = _ticklabel_dim_max;
-  ticklabel_center_dist_min = _ticklabel_center_dist_min;
-  m_axis_length = 1;
+  max_dim_along = _max_dim_along;
+  max_dim_perp = _max_dim_perp;
+  return;
+}
+
+template <>
+void Axis<AxisOrientation::Vertical>::measure_layout(
+    const Glib::RefPtr<Pango::Layout> layout, int &along, int &perp) {
+  layout->get_pixel_size(perp, along);
+  return;
+}
+
+template <>
+void Axis<AxisOrientation::Horizontal>::measure_layout(
+    const Glib::RefPtr<Pango::Layout> layout, int &along, int &perp) {
+  layout->get_pixel_size(along, perp);
   return;
 }
 

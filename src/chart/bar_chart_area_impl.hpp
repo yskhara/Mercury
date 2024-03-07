@@ -55,15 +55,14 @@ void TwoDimensionalBarChart<Dx, Dy>::optimize_axes_limits() {
       AxisTick(0.5, std::format("{}", (m_x_range.min + m_x_range.min) / 2)));
   ticks.push_back(AxisTick(1.0, std::format("{}", m_x_range.max)));
 
-  double _x_ticklabel_dim_max = 0;
-  double _x_ticklabel_distance_min = 0;
-  m_axis_x.set_ticks(std::move(ticks));
-  m_axis_x.allocate_new_length(chart_area_x);
-  m_axis_x.get_ticks_worst_dimensions(_x_ticklabel_dim_max,
-                                      _x_ticklabel_distance_min);
+  double _x_ticklabel_dim_along_max = 0;
+  double _x_ticklabel_dim_perp_max = 0;
+  m_axis_x.try_draw(get_pango_context(), ticks,
+                    _x_ticklabel_dim_along_max, _x_ticklabel_dim_perp_max);
 
-  auto x_n_div_max = m_axis_x.get_axis_length() /
-                     (_x_ticklabel_dim_max + m_dimensions.XTickLabelMargin);
+  auto x_n_div_max =
+      m_axis_x.get_axis_length() /
+      (_x_ticklabel_dim_along_max + m_dimensions.XTickLabelMargin);
 
   m_dataset.autorange_x(m_x_range, x_n_div_max);
 

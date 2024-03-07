@@ -1,4 +1,5 @@
 #pragma once
+#include "glibmm/refptr.h"
 #include <gtkmm.h>
 
 class AxisTick {
@@ -41,7 +42,7 @@ public:
   void draw(const Cairo::RefPtr<Cairo::Context> &cr,
             const Glib::RefPtr<Pango::Context> &pg);
   void try_draw(const Glib::RefPtr<Pango::Context> &pg,
-                const std::vector<const AxisTick> &ticks, double &max_dim_along,
+                const std::vector<AxisTick> &ticks, double &max_dim_along,
                 double &max_dim_perp) const;
   void set_ticks(std::vector<AxisTick> &&ticks);
   void try_draw_ticklabels();
@@ -109,4 +110,5 @@ protected:
    */
   bool update_layout(const Glib::RefPtr<Pango::Context> &pg) noexcept;
   bool update_axis_length() noexcept;
+  static void measure_layout(const Glib::RefPtr<Pango::Layout> layout, int &along, int &perp);
 };
