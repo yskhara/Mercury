@@ -37,6 +37,9 @@ struct ChartDimensions {
   };
 
   double OuterPadding = ChartAreaPadding;
+  /// width of chart area. This is the width of this control minus OuterPadding.
+  double ChartAreaWidth;
+  double ChartAreaHeight;
   double DataAreaTopMargin;
   double DataAreaLeftMargin;
   double DataAreaHeight;
@@ -201,7 +204,7 @@ private:
   void draw_text(const Cairo::RefPtr<Cairo::Context> &cr, int rectangle_width,
                  int rectangle_height);
 
-  std::tuple<double, double> get_chart_area_dimensions();
+  void update_chart_area_dimensions();
 };
 
 } // namespace Chart

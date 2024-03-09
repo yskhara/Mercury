@@ -36,29 +36,41 @@ void TwoDimensionalBarChart<Dx, Dy>::set_chart_data(DataSet<Dx, Dy> &&dataset) {
 }
 
 template <typename Dx, typename Dy>
-std::tuple<double, double>
-TwoDimensionalBarChart<Dx, Dy>::get_chart_area_dimensions() {
-  return {get_width() - (2 * ChartAreaPadding),
-          get_height() - (2 * ChartAreaPadding)};
+void TwoDimensionalBarChart<Dx, Dy>::update_chart_area_dimensions() {
+  m_dimensions.ChartAreaWidth = get_width() - (2 * ChartAreaPadding);
+  m_dimensions.ChartAreaHeight = get_height() - (2 * ChartAreaPadding);
 }
 
 template <typename Dx, typename Dy>
 void TwoDimensionalBarChart<Dx, Dy>::optimize_axes_limits() {
-  auto [chart_area_x, chart_area_y] = get_chart_area_dimensions();
-
   m_dataset.autorange_x(m_x_range);
   m_dataset.autorange_y(m_y_range);
 
-  std::vector<AxisTick> ticks;
-  ticks.push_back(AxisTick(0.0, std::format("{}", m_x_range.min)));
-  ticks.push_back(
+  std::vector<AxisTick> ticks_x;
+  std::vector<AxisTick> ticks_y;
+
+  ticks_x.push_back(AxisTick(0.0, std::format("{}", m_x_range.min)));
+  ticks_x.push_back(
       AxisTick(0.5, std::format("{}", (m_x_range.min + m_x_range.min) / 2)));
-  ticks.push_back(AxisTick(1.0, std::format("{}", m_x_range.max)));
+  ticks_x.push_back(AxisTick(1.0, std::format("{}", m_x_range.max)));
+
+  ticks_y.push_back(AxisTick(0.0, std::format("{}", m_y_range.min)));
+  ticks_y.push_back(
+      AxisTick(0.5, std::format("{}", (m_y_range.min + m_y_range.min) / 2)));
+  ticks_y.push_back(AxisTick(1.0, std::format("{}", m_y_range.max)));
 
   double _x_ticklabel_dim_along_max = 0;
   double _x_ticklabel_dim_perp_max = 0;
-  m_axis_x.try_draw(get_pango_context(), ticks,
-                    _x_ticklabel_dim_along_max, _x_ticklabel_dim_perp_max);
+  m_axis_x.try_draw(get_pango_context(), ticks_x, _x_ticklabel_dim_along_max,
+                    _x_ticklabel_dim_perp_max);
+  double _y_ticklabel_dim_along_max = 0;
+  double _y_ticklabel_dim_perp_max = 0;
+  m_axis_y.try_draw(get_pango_context(), ticks_y, _y_ticklabel_dim_along_max,
+                    _y_ticklabel_dim_perp_max);
+
+  m_axis_x.allocate_new_length(
+      m_dimensions.ChartAreaWidth -
+      (_y_ticklabel_dim_perp_max + ChartYTickMargin + ChartYTickOuterLength));
 
   auto x_n_div_max =
       m_axis_x.get_axis_length() /
@@ -172,6 +184,8 @@ void TwoDimensionalBarChart<Dx, Dy>::on_draw(
     const Cairo::RefPtr<Cairo::Context> &cr, int width, int height) {
   const int rectangle_width = width;
   const int rectangle_height = height / 2;
+
+  update_chart_area_dimensions();
 
   optimize_axes_limits();
   draw_axes(cr);
