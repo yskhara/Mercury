@@ -205,6 +205,7 @@ private:
                  int rectangle_height);
 
   void update_chart_area_dimensions();
+  void estimate_axis_size();
 };
 
 } // namespace Chart

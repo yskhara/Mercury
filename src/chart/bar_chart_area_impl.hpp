@@ -42,6 +42,35 @@ void TwoDimensionalBarChart<Dx, Dy>::update_chart_area_dimensions() {
 }
 
 template <typename Dx, typename Dy>
+void TwoDimensionalBarChart<Dx, Dy>::estimate_axis_size()
+{
+  m_dataset.autorange_x(m_x_range);
+  m_dataset.autorange_y(m_y_range);
+  
+  std::vector<AxisTick> ticks_x;
+  std::vector<AxisTick> ticks_y;
+
+  ticks_x.push_back(AxisTick(0.0, std::format("{}", m_x_range.min)));
+  ticks_x.push_back(
+      AxisTick(0.5, std::format("{}", (m_x_range.min + m_x_range.min) / 2)));
+  ticks_x.push_back(AxisTick(1.0, std::format("{}", m_x_range.max)));
+
+  ticks_y.push_back(AxisTick(0.0, std::format("{}", m_y_range.min)));
+  ticks_y.push_back(
+      AxisTick(0.5, std::format("{}", (m_y_range.min + m_y_range.min) / 2)));
+  ticks_y.push_back(AxisTick(1.0, std::format("{}", m_y_range.max)));
+
+  double _x_ticklabel_dim_along_max = 0;
+  double _x_ticklabel_dim_perp_max = 0;
+  m_axis_x.try_draw(get_pango_context(), ticks_x, _x_ticklabel_dim_along_max,
+                    _x_ticklabel_dim_perp_max);
+  double _y_ticklabel_dim_along_max = 0;
+  double _y_ticklabel_dim_perp_max = 0;
+  m_axis_y.try_draw(get_pango_context(), ticks_y, _y_ticklabel_dim_along_max,
+                    _y_ticklabel_dim_perp_max);
+}
+
+template <typename Dx, typename Dy>
 void TwoDimensionalBarChart<Dx, Dy>::optimize_axes_limits() {
   m_dataset.autorange_x(m_x_range);
   m_dataset.autorange_y(m_y_range);
@@ -93,10 +122,10 @@ void TwoDimensionalBarChart<Dx, Dy>::optimize_axes_limits() {
   //                                               cand_y_ticklabel_height);
 
   double cand_chart_data_area_width =
-      chart_area_x - (cand_y_ticklabel_width + m_dimensions.YTickLabelMargin +
+      m_dimensions.ChartAreaWidth - (cand_y_ticklabel_width + m_dimensions.YTickLabelMargin +
                       ChartYTickOuterLength + (cand_x_ticklabel_width / 2.0));
   double cand_chart_data_area_height =
-      chart_area_y - (cand_x_ticklabel_height + m_dimensions.XTickLabelMargin +
+      m_dimensions.ChartAreaHeight - (cand_x_ticklabel_height + m_dimensions.XTickLabelMargin +
                       ChartXTickOuterLength + (cand_y_ticklabel_height / 2.0));
   std::cout << "cand_chart_data_area_width : " << cand_chart_data_area_width
             << std::endl
