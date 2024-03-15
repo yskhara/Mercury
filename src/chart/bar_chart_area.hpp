@@ -177,6 +177,8 @@ private:
 template <typename Dx, typename Dy>
 class TwoDimensionalBarChart : public Gtk::DrawingArea {
 public:
+  using XAxis = Axis<AxisOrientation::Horizontal>;
+  using YAxis = Axis<AxisOrientation::Vertical>;
   TwoDimensionalBarChart();
   virtual ~TwoDimensionalBarChart();
 

@@ -43,7 +43,7 @@ template <AxisOrientation Orientation>
 void Axis<Orientation>::try_draw(
     const Glib::RefPtr<Pango::Context> &pg,
     const std::vector<AxisTick> &ticks, double &max_dim_along,
-    double &max_dim_perp) const {
+    double &max_dim_perp) {
   if (ticks.empty()) {
     max_dim_along = max_dim_perp = 0.0;
     return;

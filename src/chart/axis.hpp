@@ -41,9 +41,9 @@ public:
    */
   void draw(const Cairo::RefPtr<Cairo::Context> &cr,
             const Glib::RefPtr<Pango::Context> &pg);
-  void try_draw(const Glib::RefPtr<Pango::Context> &pg,
+  static void try_draw(const Glib::RefPtr<Pango::Context> &pg,
                 const std::vector<AxisTick> &ticks, double &max_dim_along,
-                double &max_dim_perp) const;
+                double &max_dim_perp);
   void set_ticks(std::vector<AxisTick> &&ticks);
   void try_draw_ticklabels();
   // virtual void

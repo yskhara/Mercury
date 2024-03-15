@@ -62,11 +62,11 @@ void TwoDimensionalBarChart<Dx, Dy>::estimate_axis_size()
 
   double _x_ticklabel_dim_along_max = 0;
   double _x_ticklabel_dim_perp_max = 0;
-  m_axis_x.try_draw(get_pango_context(), ticks_x, _x_ticklabel_dim_along_max,
+  XAxis::try_draw(get_pango_context(), ticks_x, _x_ticklabel_dim_along_max,
                     _x_ticklabel_dim_perp_max);
   double _y_ticklabel_dim_along_max = 0;
   double _y_ticklabel_dim_perp_max = 0;
-  m_axis_y.try_draw(get_pango_context(), ticks_y, _y_ticklabel_dim_along_max,
+  YAxis::try_draw(get_pango_context(), ticks_y, _y_ticklabel_dim_along_max,
                     _y_ticklabel_dim_perp_max);
 }
 
@@ -96,6 +96,11 @@ void TwoDimensionalBarChart<Dx, Dy>::optimize_axes_limits() {
   double _y_ticklabel_dim_perp_max = 0;
   m_axis_y.try_draw(get_pango_context(), ticks_y, _y_ticklabel_dim_along_max,
                     _y_ticklabel_dim_perp_max);
+
+  // ここまでを TwoDimensionalBarChart<Dx, Dy>::estimate_axis_size() に委譲する。
+  // そこで得た ticklabel のタテヨコ寸法はワーストの推定値。
+  // これは悲観的な推定値（実際にはすべての ticklabel がそのサイズ以下のため）なので、
+  // 実際に描画してみると領域が余るはず。描画
 
   m_axis_x.allocate_new_length(
       m_dimensions.ChartAreaWidth -

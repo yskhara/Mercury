@@ -21,5 +21,17 @@
     結局 ticklabel 同士の中心間距離は無くても良さそうだし。
     あるいは、 Chart （親）側が axis を 2 つ持っておくのも手。実際に描画される axis と、寸法測定用の axis。shadow axis みたいな。
     draw() に引数なし版のオーバーロードを用意して（つまり cairo_context を渡さない）、それが呼ばれたら実際には描画せず、 PangoLayout だけ作ってサイズ測定するだけ、みたいな感じ。
-
+    - その場合、寸法の推定には今の Pango context を使うことになる。推定しようとするたびに毎回 DrawingArea から今の Pango のハンドルを取得することになる。
+    - layout を保管しておくのはナシ、かな。
+  - で、何をしたいんだっけ。
+  実際には描画せずに、描画したら ticklabel がどの程度のサイズになるか、を測定/推定したい。
+  入力は：
+    - 描画する ticks
+    - 描画に使う Pango context。
+  だけ。 ticks すべてに対して layout を生成して、タテヨコの寸法ごとに最大値を求める。だけ。
+  これは static でも全然成立しそうな内容。
+  *Axis\<O>::try_draw_ticks_and_measure(&pg, &ticks, &dim_max_along, &dim_max_perp)*
+  みたいな感じ？
+    - いやいや、それだけでなく、 margin みたいな m_dimensions 的データも必要なんだっけ？
+    Axis 固有の状態を使うなら static では困るなぁ。
 
